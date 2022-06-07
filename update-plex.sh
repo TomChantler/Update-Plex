@@ -1,6 +1,6 @@
 #!/bin/bash
 # tomssl.com/update-plex-server-on-ubuntu-automatically
-plex_token=PUTYOURSHERE
+plex_token=$PUTYOURSHERE
 beta_channel=false
 dry_run=false
 force_installation=false
