@@ -1,6 +1,6 @@
 #!/bin/bash
 # tomssl.com/update-plex-server-on-ubuntu-automatically
-plex_token=PUTYOURSHERE
+plex_token=$PUTYOURSHERE
 beta_channel=false
 dry_run=false
 force_installation=false
@@ -40,6 +40,12 @@ echo "Dry Run = $dry_run"
 echo "Force Download = $force_installation"
 echo "Overwrite File = $overwrite_file"
 
+detected_arch=`dpkg --print-architecture`
+case $detected_arch in
+    "arm64"|"amd64"|"i386"|"armhf") echo "Architecture = $detected_arch" ;; # Plex's download page has 4 architectures available
+    *) echo -e "\e[31mYour architecture is not supported by Plex! \e[0m" && exit 1 ;; # need to stop the script early if the architecture detection line fails (i.e. a user running PowerPC or any OS other than Debian/Ubuntu)
+esac
+
 if [[ $EUID -ne 0 ]]; then
     echo "$0 is not running as root. Try using sudo."
     exit 2
@@ -51,7 +57,7 @@ else
     rawjson=`curl -s "https://plex.tv/api/downloads/5.json"`
 fi
 
-url=`echo $rawjson | jq -r -c '.computer.Linux.releases | .[] | select(.url | contains("amd64")) | .url'`
+url=`echo $rawjson | jq -r -c '.computer.Linux.releases | .[] | select(.url | contains("'$detected_arch'")) | select(.url | contains("debian")) | .url'`
 latestversion=`echo $rawjson | jq -r -c '.computer.Linux.version'`
 installedversion=`dpkg -s plexmediaserver | grep -i '^Version' | cut -d' ' -f2`
 echo "Latest version:    $latestversion"
